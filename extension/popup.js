@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
-  var Button = document.getElementById('Submit');
   
+	chrome.extension.sendMessage({status: "opened"},
+		function(response){
+			console.log(response);
+		}
+	);
+  
+  
+  var Button = document.getElementById('Submit');
   Button.addEventListener('click', function() {
 	
 	var genderAuth;
@@ -48,4 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
       f.submit();
     });
   }, false);
+  
+  
 }, false);
