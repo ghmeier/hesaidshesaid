@@ -46,6 +46,7 @@ Analyzer.writeClassifier = function(file,classifier){
 Analyzer.getHTMLBody = function(url,callback){
     request(url,function(err,res,body){
         if (err){
+            console.log(url+" failed getting text from here");
             callback(false);
         }
 
@@ -71,6 +72,10 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
 
     Analyzer.getHTMLBody(url,function(raw){
         var text = extractor(raw).text;
+
+        if (!text || text == ""){
+            callback("Text from "+url+" was empty");
+        }
 
         self.findSentiment(text,function(sentiment){
             var auth_res = self.learnAuthor(text,authorGender)
