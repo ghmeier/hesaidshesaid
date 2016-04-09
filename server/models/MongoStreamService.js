@@ -9,12 +9,12 @@ function MongoStreamService(){
     this.updating = false;
 }
 
-MongoStreamService.getStreamItem = function(type,update){
+MongoStreamService.getStreamItem = function(type,update,identifier){
     if (!type){
         return null;
     }
 
-    return {type:type,update:update};
+    return {type:type,update:update,id:identifier};
 }
 
 MongoStreamService.prototype.commit = function(){
@@ -43,6 +43,10 @@ MongoStreamService.prototype.commitDB = function(db){
     var query = {name:-1};
     if (popped.update.url){
         query = {"url":popped.update.url};
+    }
+
+    if (popped.update.id){
+        query = popped.update.id;
     }
 
     db.collection(collection_name).update(query,popped.update,{upsert:true},function(err,results){
