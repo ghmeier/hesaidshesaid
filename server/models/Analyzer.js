@@ -6,41 +6,55 @@ var MongoStreamService = require("./MongoStreamService.js");
 var path = require("path");
 var indico = require("indico.io");
 indico.apiKey = "7c494dbd995378039f6e01915e09a94a";
-var author_url = "./authors.json";
-var subject_url = "./subjects.json";
-var sentiment_url = "./sentiments.json";
+
+var MongoClient = require("mongodb").MongoClient;
+var ObjectId = require("mongodb").ObjectID;
+var mongo_url = process.env["MONGOLAB_URI"] || "mongodb://heroku_7x8bk4nr:a6bmbkcih22skroj9f33hlfl25@ds021010.mlab.com:21010/heroku_7x8bk4nr";
+
+var author_url = "authors";
+var subject_url = "subjects";
+var sentiment_url = "sentiments";
 var GENDER_STRINGS = {"male":true,"female":true,"non-binary":true};
 
-function Analyzer(){
-    this.authors = Analyzer.getClassifier(author_url);
-    this.subjects = Analyzer.getClassifier(subject_url);
-    this.sentiments = Analyzer.getClassifier(sentiment_url);
-    this.mongoStream = new MongoStreamService();
+function Analyzer(callback){
+    var self = this;
+    this.authors = Analyzer.getClassifier(author_url,function(){
+        self.subjects = Analyzer.getClassifier(subject_url,function(){
+            self.sentiments = Analyzer.getClassifier(sentiment_url,function(){
+                self.mongoStream = new MongoStreamService();
+
+                callback(self);
+            });
+        });
+    });
 }
 
-Analyzer.getAnalyzer = function(){
-    return new Analyzer();
+Analyzer.getAnalyzer = function(callback){
+    new Analyzer(function(analyzer){
+        callback(analyzer);
+    });
 }
 
-Analyzer.getClassifier = function(file){
-    if (!fs.existsSync(file)){
-        fs.writeFileSync(file,"");
-    }
+Analyzer.getClassifier = function(file,callback){
+    var self = this;
+    MongoClient.connect(mongo_url,function(err,db){
+        db.collection("classifiers").findOne({name:file},{},function(err,doc){
+            var data = doc;
 
-    var data = fs.readFileSync(file,"utf8");
-    var authors = {};
+            if (!data){
+                self.authors = bayes();
+            }else{
+                self.authors = bayes.fromJson(data.classifier);
+            }
 
-    if (data){
-        authors = bayes.fromJson(data);
-    }else{
-        authors = bayes();
-    }
-
-    return  authors;
+            callback();
+        });
+    });
 }
 
 Analyzer.writeClassifier = function(file,classifier){
-    fs.writeFileSync(file,classifier.toJson());
+    var item = MongoStreamService.getStreamItem("classifiers",{name:file},classifier.toJson());
+    this.mongoStream.push(item);
 }
 
 Analyzer.getHTMLBody = function(url,callback){
