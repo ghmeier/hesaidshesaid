@@ -1,5 +1,6 @@
 var fs = require("fs");
 var bayes = require("bayes");
+var extractor = require('unfluff');
 var author_url = "./authors.json";
 var subject_url = "./subjects.json"
 var GENDER_STRINGS = ["male","female","non-binary"];
@@ -30,14 +31,18 @@ Analyzer.writeClassifier = function(file,classifier){
     fs.writeFileSynce(file,classifier.toJosn());
 }
 
-Analyzer.prototype.guess = function(text,callback){
+Analyzer.prototype.guess = function(raw,callback){
+
+    var text = extractor(raw).text;
     var authorGender = this.authors.categorize(text);
     var subjectGender = this.subjects.categorize(text);
 
     callback({author:authorGender,subject:subjectGender});
 }
 
-Analyzer.prototype.learn = function(text,authorGender,subjectGender,callback){
+Analyzer.prototype.learn = function(raw,authorGender,subjectGender,callback){
+    var text = extractor(raw).text;
+
     if (this.learnAuthor(text,authorGender)){
         if (this.learnSubject(text,subjectGender)){
             callback(true);
