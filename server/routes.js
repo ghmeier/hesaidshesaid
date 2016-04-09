@@ -25,6 +25,12 @@ module.exports = function(app,analyzer){
         });
     });
 
+    app.get("/fix",function(req,res){
+        analyzer.fixLearning();
+
+        res.json({success:"Running Fix"});
+    });
+
     app.post("/learn",function(req,res){
         var text = req.body.text;
         var author = req.body.author;
@@ -48,5 +54,17 @@ module.exports = function(app,analyzer){
         analyzer.learn(text,author,subject,function(success){
             res.json({success:success});
         });
+    });
+
+    app.get("/authors",function(req,res){
+        res.json({classifier:analyzer.authors});
+    });
+
+    app.get("/subjects",function(req,res){
+        res.json({classifier:analyzer.subjects});
+    });
+
+    app.get("/sentiments",function(req,res){
+        res.json({classifier:analyzer.sentiments});
     });
 };

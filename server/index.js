@@ -7,7 +7,8 @@ var expressValidator = require("express-validator");
 var session = require("express-session");
 var cors = require("cors");
 var fs = require("fs");
-var Analyzer = require("./models/Analyzer.js")
+var Analyzer = require("./models/Analyzer.js");
+var routes = require("./routes.js");
 var corsOptions = {
     origin : "*"
 };
@@ -28,9 +29,10 @@ app.use(session({
 }));
 app.use(cors(corsOptions));
 
-analyzer = Analyzer.getAnalyzer();
-
-var routes = require("./routes.js");
-routes(app,analyzer);
+Analyzer.getAnalyzer(function(analyzer){
+    routes(app,analyzer);
+    console.log("Ready to go");
+});
 
 module.exports = app;
+

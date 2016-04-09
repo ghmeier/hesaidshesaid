@@ -6,41 +6,61 @@ var MongoStreamService = require("./MongoStreamService.js");
 var path = require("path");
 var indico = require("indico.io");
 indico.apiKey = "7c494dbd995378039f6e01915e09a94a";
-var author_url = "./authors.json";
-var subject_url = "./subjects.json";
-var sentiment_url = "./sentiments.json";
+
+var MongoClient = require("mongodb").MongoClient;
+var ObjectId = require("mongodb").ObjectID;
+var mongo_url = process.env["MONGOLAB_URI"] || "mongodb://heroku_7x8bk4nr:a6bmbkcih22skroj9f33hlfl25@ds021010.mlab.com:21010/heroku_7x8bk4nr";
+
+var author_url = "authors";
+var subject_url = "subjects";
+var sentiment_url = "sentiments";
 var GENDER_STRINGS = {"male":true,"female":true,"non-binary":true};
 
-function Analyzer(){
-    this.authors = Analyzer.getClassifier(author_url);
-    this.subjects = Analyzer.getClassifier(subject_url);
-    this.sentiments = Analyzer.getClassifier(sentiment_url);
-    this.mongoStream = new MongoStreamService();
+function Analyzer(callback){
+    var self = this;
+    self.authors = {};
+    self.sentiments = {};
+    self.subjects = {};
+    Analyzer.getClassifier(self,author_url,function(){
+        Analyzer.getClassifier(self,subject_url,function(){
+            Analyzer.getClassifier(self,sentiment_url,function(){
+                self.mongoStream = new MongoStreamService();
+
+                callback(self);
+            });
+        });
+    });
 }
 
-Analyzer.getAnalyzer = function(){
-    return new Analyzer();
+Analyzer.getAnalyzer = function(callback){
+    new Analyzer(function(analyzer){
+
+        callback(analyzer);
+    });
 }
 
-Analyzer.getClassifier = function(file){
-    if (!fs.existsSync(file)){
-        fs.writeFileSync(file,"");
-    }
+Analyzer.getClassifier = function(analyzer,file,callback){
+    MongoClient.connect(mongo_url,function(err,db){
+        db.collection("classifiers").findOne({name:file},{},function(err,doc){
+            var data = doc;
+            var classifier = bayes();
+            if (data && data.classifier){
+                classifier = bayes.fromJson(JSON.stringify(data.classifier));
+            }
 
-    var data = fs.readFileSync(file,"utf8");
-    var authors = {};
+            analyzer[file] = classifier;
+            callback();
 
-    if (data){
-        authors = bayes.fromJson(data);
-    }else{
-        authors = bayes();
-    }
+            db.close();
 
-    return  authors;
+        });
+    });
 }
 
-Analyzer.writeClassifier = function(file,classifier){
-    fs.writeFileSync(file,classifier.toJson());
+Analyzer.prototype.writeClassifier = function(file,classifier){
+    var item = MongoStreamService.getStreamItem("classifiers",{name:file,classifier:JSON.parse(classifier.toJson())},{name:file});
+
+    this.mongoStream.push(item);
 }
 
 Analyzer.getHTMLBody = function(url,callback){
@@ -48,10 +68,11 @@ Analyzer.getHTMLBody = function(url,callback){
         if (err){
             console.log(url+" failed getting text from here");
             callback(false);
+            return;
         }
 
         callback(body);
-    });
+    }).setMaxListeners(0);;
 }
 
 Analyzer.prototype.guess = function(url,callback){
@@ -61,8 +82,9 @@ Analyzer.prototype.guess = function(url,callback){
         var authorGender = self.authors.categorize(text);
         var subjectGender = self.subjects.categorize(text);
         self.findSentiment(text,function(res){
-            var sentiment = self.sentiments.categorize(text);
-            callback({author:authorGender,subject:subjectGender,sentiment:sentiment});
+            var sentiment = Analyzer.convertSentiment(res);
+            var sentimentGender = self.sentiments.categorize(sentiment);
+            callback({author:authorGender,subject:subjectGender,sentiment:sentiment,sentimentGender:sentimentGender});
         });
     });
 }
@@ -91,10 +113,62 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
     });
 }
 
+Analyzer.prototype.learnFromValues = function(url,authorGender,subjectGender,sentiment,callback){
+    var self = this;
+
+    Analyzer.getHTMLBody(url,function(raw){
+        var text = extractor(raw).text;
+
+        if (!text || text == ""){
+            callback("Text from "+url+" was empty");
+            return;
+        }
+
+        var auth_res = self.learnAuthor(text,authorGender)
+        var sub_res = self.learnSubject(text,authorGender+"_"+subjectGender)
+        var sent_res = self.learnSentiment(sentiment,authorGender+"_"+subjectGender)
+
+        callback(auth_res && sub_res && sent_res);
+
+    });
+}
+
+Analyzer.prototype.fixLearning = function(callback){
+    var self = this;
+    MongoClient.connect(mongo_url,function(err,db){
+
+        db.collection("article").find({}).toArray(function(err,docs){
+
+            self.learnAll(docs);
+            db.close();
+        });
+    });
+}
+
+Analyzer.prototype.learnAll = function(list,callback){
+    if (list.length <= 0){
+        return;
+    }
+
+    var cur = list.shift();
+    var self = this;
+
+    if (!cur || !cur.url || !cur.authorGender || !cur.subjectGender){
+        self.learnAll(list);
+        return;
+    }
+    console.log("Docs remaining: "+list.length);
+    this.learnFromValues(cur.url,cur.authorGender,cur.subjectGender,cur.sentiment,function(){
+        self.learnAll(list);
+    });
+}
+
+
+
 Analyzer.prototype.learnAuthor = function(text,authorGender){
     if (Analyzer.validateGenderString(authorGender)){
         this.authors.learn(text,authorGender);
-        Analyzer.writeClassifier(author_url,this.authors);
+        this.writeClassifier(author_url,this.authors);
         return true;
     }
 
@@ -114,13 +188,8 @@ Analyzer.prototype.learnSentiment = function(sentiment,gender){
     }
 
     if (Analyzer.validateGenderString(gender.split("_")[0])){
-        var senti_text = "negative";
-        if (sentiment >= .5){
-            senti_text = 'positive';
-        }
-
-        this.sentiments.learn(senti_text,gender);
-        Analyzer.writeClassifier(sentiment_url,this.sentiments);
+        this.sentiments.learn(Analyzer.convertSentiment(sentiment),gender);
+        this.writeClassifier(sentiment_url,this.sentiments);
         return true;
     }
 
@@ -130,7 +199,7 @@ Analyzer.prototype.learnSentiment = function(sentiment,gender){
 Analyzer.prototype.learnSubject = function(text,subjectGender){
     if (Analyzer.validateGenderString(subjectGender.split("_")[0])){
         this.subjects.learn(text,subjectGender);
-        Analyzer.writeClassifier(subject_url,this.subjects);
+        this.writeClassifier(subject_url,this.subjects);
         return true;
     }
 
@@ -139,6 +208,10 @@ Analyzer.prototype.learnSubject = function(text,subjectGender){
 
 Analyzer.validateGenderString = function(gender){
     return GENDER_STRINGS[gender.toLowerCase()];
+}
+
+Analyzer.convertSentiment = function(sentiment){
+    return Math.floor(sentiment*10).toString();
 }
 
 module.exports = Analyzer;

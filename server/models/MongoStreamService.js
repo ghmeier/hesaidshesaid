@@ -41,12 +41,9 @@ MongoStreamService.prototype.commitDB = function(db){
     var self = this;
     var collection_name = popped.type;
     var query = {name:-1};
-    if (popped.update.url){
-        query = {"url":popped.update.url};
-    }
 
-    if (popped.update.id){
-        query = popped.update.id;
+    if (popped.id){
+        query = popped.id;
     }
 
     db.collection(collection_name).update(query,popped.update,{upsert:true},function(err,results){
@@ -67,10 +64,9 @@ MongoStreamService.prototype.push = function(item){
 MongoStreamService.prototype.merge = function(item){
     var mp = this.getMergePosition(item.type);
 
-    if (mp < 0 || (item.update._id && item.update._id == this.stream[mp].update._id)){
         this.stream.push(item);
         return;
-    }
+/*    }
 
     var update_keys = Object.keys(item.update);
 
@@ -83,7 +79,7 @@ MongoStreamService.prototype.merge = function(item){
         }
 
         this.stream[mp].update[key] = update_item;
-    }
+    }*/
 
 }
 
