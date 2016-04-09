@@ -6,33 +6,72 @@
     <script src="popup.js"></script>
   </head>
   <style>
-  div{
-  width: 250px;
-  height: 250px;
-  }
+    .wrapper{
+      width: 300px;
+      height: 250px;
+    }
+    .selector{
+      width: 150px;
+      display: table-cell;
+    }
+    .submit-wrapper{
+      margin-top:10px;
+      margin-bottom:5px;
+      text-align:center;
+    }
+    label{
+      padding-right:60%;
+    }
+    h1{
+      margin-bottom: 5px;
+    }
+    h4{
+      margin-bottom: 5px;
+      margin-top:5px;
+    }
   </style>
-  <div>
   <body>
-    <h1>He Said She Said</h1>
-	<p> Enter author gender </p>
-  <p>
-  <label for="aa">
-  <input type="radio" class = "genderA" name="a" id="aa" value="female">female</label></br>
-  <label for="ab">
-	<input type="radio" class = "genderA" name="a" id="ab" value="male">male</label></br>
-  <label for="ac">
-	<input type="radio" class = "genderA" name="a" id="ac" value="nonBin">non-binary</label></br>
-  </p>
-	<p> Enter subject gender</p>
-  <label for="ba">
-  <input type="radio" class = "genderS" name="b" id="ba" value="female">female</label></br>
-  <label for="bb">
-	<input type="radio" class = "genderS" name="b" id="bb" value="male">male</label></br>
-  <label for="bc">
-	<input type="radio" class = "genderS" name="b" id="bc" value="nonBin">non-binary</label></br>
-	<p></p>
-	<input type ="submit" id = "Submit" value="Submit"></br>
-	<p></p>
-	<br>
-  </body> </div>
+    <div class="wrapper">
+
+      <h1>He Said She Said</h1>
+      <hr>
+      <div class="selection">
+        <div class="selector">
+          <h4>Author Gender:</h4>
+          <label for="aa">
+            <input type="radio" class = "genderA" name="a" id="aa" value="female">Female
+          </label></br>
+          <label for="ab">
+    	     <input type="radio" class = "genderA" name="a" id="ab" value="male">Male
+          </label></br>
+          <label for="ac">
+    	     <input type="radio" class = "genderA" name="a" id="ac" value="nonBin">Non-binary
+          </label></br>
+        </div>
+
+      <div class="selector">
+        <h4>Subject Gender:</h4>
+        <label for="ba">
+          <input type="radio" class = "genderS" name="b" id="ba" value="female">Female
+        </label></br>
+        <label for="bb">
+      	  <input type="radio" class = "genderS" name="b" id="bb" value="male">Male
+        </label></br>
+        <label for="bc">
+      	  <input type="radio" class = "genderS" name="b" id="bc" value="nonBin">Non-binary
+        </label></br>
+      </div>
+      <div class="submit-wrapper">
+        <input type ="submit" id = "Submit" value="Submit"></br>
+      </div>
+    </div>
+    <hr>
+    <div class="response">
+      <h4>Predicted Genders:</h4>
+      <div class="selector">Author: <span id="pag">Loading...</span></div>
+      <div class="selector">Subject: <span id="psg">Loading...</span></div>
+      <div>Sentiment: <span id="psc">-1</span>/10 is like a <span id="psg">Loading...</span> writing.</div>
+
+    </div>
+  </body>
 </html>

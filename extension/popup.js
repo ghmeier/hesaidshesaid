@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
   var Button = document.getElementById('Submit');
-  
+
   Button.addEventListener('click', function() {
-	
+
 	var genderAuth;
 	var genderA = document.getElementsByClassName('genderA');
 	for(var i = 0; i < genderA.length; i++){
@@ -17,32 +17,32 @@ document.addEventListener('DOMContentLoaded', function() {
 		  genderSub = genderS[i].value;
 	  }
 	}
-	
+
     chrome.tabs.getSelected(null, function(tab) {
       d = document;
       var f = d.createElement('form');
-	  
+
 	  var gA = d.createElement('input');
 	  gA.name = 'author';
 	  gA.type = 'hidden';
 	  gA.value = genderAuth;
-	  
+
 	  var gS = d.createElement('input');
 	  gS.name = 'subject';
 	  gS.type = 'hidden';
 	  gS.value = genderSub;
-	  
+
 	  var i = d.createElement('input');
       i.name = 'text';
 	  i.type = 'hidden';
       i.value = tab.url;
-	  
-	  
+
+
 	  f.appendChild(gA);
 	  f.appendChild(gS);
       f.appendChild(i);
       d.body.appendChild(f);
-	  
+
 	  f.action = 'https://hesaidshesaid.herokuapp.com/learn';
       f.method = 'post';
       f.submit();
