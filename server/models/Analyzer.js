@@ -1,8 +1,9 @@
 var fs = require("fs");
 var bayes = require("bayes");
 var extractor = require('unfluff');
+var request = require("request");
 var author_url = "./authors.json";
-var subject_url = "./subjects.json"
+var subject_url = "./subjects.json";
 var GENDER_STRINGS = ["male","female","non-binary"];
 
 function Analyzer(){
@@ -17,7 +18,7 @@ Analyzer.getAnalyzer = function(){
 Analyzer.getClassifier = function(file){
     var data = fs.readFileSync(file,"utf8");
     var authors = {};
-
+    console.log("Getting from "+file);
     if (data){
         authors = bayes.fromJson(data);
     }else{
@@ -31,13 +32,25 @@ Analyzer.writeClassifier = function(file,classifier){
     fs.writeFileSynce(file,classifier.toJosn());
 }
 
-Analyzer.prototype.guess = function(raw,callback){
+Analyzer.getHTMLBody = function(url,callback){
+    request("https://en.wikipedia.org/wiki/Computer_science",function(err,res,body){
+        if (err){
+            callback(false);
+        }
 
-    var text = extractor(raw).text;
-    var authorGender = this.authors.categorize(text);
-    var subjectGender = this.subjects.categorize(text);
+        callback(body);
+    });
+}
 
-    callback({author:authorGender,subject:subjectGender});
+Analyzer.prototype.guess = function(url,callback){
+
+    Analyzer.getHTMLBody(url,function(raw){
+        var text = extractor(raw).text;
+        console.log(text);
+        var authorGender = this.authors.categorize(text);
+        var subjectGender = this.subjects.categorize(text);
+        callback({author:authorGender,subject:subjectGender});
+    });
 }
 
 Analyzer.prototype.learn = function(raw,authorGender,subjectGender,callback){

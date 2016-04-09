@@ -8,12 +8,13 @@ module.exports = function(app,analyzer){
     });
 
     app.post("/ping",function(req,res){
-        res.json({message:"pong",text:req.body.text});
+        res.json({message:"pong",text:req.query.text});
     });
 
 
-    app.get("/guess",function(req,res){
-        var text = req.body.text;
+    app.post("/guess",function(req,res){
+        var text = req.query.text;
+        console.log()
 
         if (!text){
             res.json({success:false,message:"text is a required parameter."});
@@ -24,10 +25,10 @@ module.exports = function(app,analyzer){
         });
     });
 
-    app.get("/learn",function(req,res){
-        var text = req.body.text;
-        var author = req.body.author;
-        var subject = req.body.subject;
+    app.post("/learn",function(req,res){
+        var text = req.query.text;
+        var author = req.query.author;
+        var subject = req.query.subject;
 
         analyzer.learn(text,author,subject,function(success){
             res.json({success:success});
