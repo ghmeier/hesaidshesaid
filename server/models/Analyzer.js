@@ -3,6 +3,7 @@ var bayes = require("bayes");
 var extractor = require('unfluff');
 var request = require("request");
 var MongoStreamService = require("./MongoStreamService.js");
+var path = require("path");
 var author_url = "./authors.json";
 var subject_url = "./subjects.json";
 var GENDER_STRINGS = {"male":true,"female":true,"non-binary":true};
@@ -18,6 +19,10 @@ Analyzer.getAnalyzer = function(){
 }
 
 Analyzer.getClassifier = function(file){
+    if (!fs.existsSync(file)){
+        fs.writeFileSync(file,"");
+    }
+
     var data = fs.readFileSync(file,"utf8");
     var authors = {};
 
