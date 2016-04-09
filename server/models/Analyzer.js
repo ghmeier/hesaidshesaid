@@ -67,7 +67,7 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
         var text = extractor(raw).text;
 
         if (self.learnAuthor(text,authorGender)){
-            if (self.learnSubject(text,subjectGender)){
+            if (self.learnSubject(text,authorGender+"_"+subjectGender)){
                 var item = MongoStreamService.getStreamItem("article",{url:url,authorGender:authorGender,subjectGender:subjectGender});
                 self.mongoStream.push(item);
                 callback(true);
