@@ -31,6 +31,8 @@ app.use(cors(corsOptions));
 
 Analyzer.getAnalyzer(function(analyzer){
     routes(app,analyzer);
+    console.log("Ready to go");
 });
 
 module.exports = app;
+

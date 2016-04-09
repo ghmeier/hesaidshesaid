@@ -25,6 +25,12 @@ module.exports = function(app,analyzer){
         });
     });
 
+    app.get("/fix",function(req,res){
+        analyzer.fixLearning();
+
+        res.json({success:"Running Fix"});
+    });
+
     app.post("/learn",function(req,res){
         var text = req.body.text;
         var author = req.body.author;

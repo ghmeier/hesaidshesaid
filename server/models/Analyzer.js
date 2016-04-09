@@ -18,9 +18,12 @@ var GENDER_STRINGS = {"male":true,"female":true,"non-binary":true};
 
 function Analyzer(callback){
     var self = this;
-    this.authors = Analyzer.getClassifier(author_url,function(){
-        self.subjects = Analyzer.getClassifier(subject_url,function(){
-            self.sentiments = Analyzer.getClassifier(sentiment_url,function(){
+    self.authors = {};
+    self.sentiments = {};
+    self.subjects = {};
+    Analyzer.getClassifier(self,author_url,function(){
+        Analyzer.getClassifier(self,subject_url,function(){
+            Analyzer.getClassifier(self,sentiment_url,function(){
                 self.mongoStream = new MongoStreamService();
 
                 callback(self);
@@ -31,29 +34,32 @@ function Analyzer(callback){
 
 Analyzer.getAnalyzer = function(callback){
     new Analyzer(function(analyzer){
+
         callback(analyzer);
     });
 }
 
-Analyzer.getClassifier = function(file,callback){
-    var self = this;
+Analyzer.getClassifier = function(analyzer,file,callback){
     MongoClient.connect(mongo_url,function(err,db){
         db.collection("classifiers").findOne({name:file},{},function(err,doc){
             var data = doc;
-
-            if (!data){
-                self.authors = bayes();
-            }else{
-                self.authors = bayes.fromJson(data.classifier);
+            var classifier = bayes();
+            if (data && data.classifier){
+                classifier = bayes.fromJson(JSON.stringify(data.classifier));
             }
 
+            analyzer[file] = classifier;
             callback();
+
+            db.close();
+
         });
     });
 }
 
-Analyzer.writeClassifier = function(file,classifier){
-    var item = MongoStreamService.getStreamItem("classifiers",{name:file},classifier.toJson());
+Analyzer.prototype.writeClassifier = function(file,classifier){
+    var item = MongoStreamService.getStreamItem("classifiers",{name:file,classifier:JSON.parse(classifier.toJson())},{name:file});
+
     this.mongoStream.push(item);
 }
 
@@ -62,10 +68,11 @@ Analyzer.getHTMLBody = function(url,callback){
         if (err){
             console.log(url+" failed getting text from here");
             callback(false);
+            return;
         }
 
         callback(body);
-    });
+    }).setMaxListeners(0);;
 }
 
 Analyzer.prototype.guess = function(url,callback){
@@ -105,10 +112,64 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
     });
 }
 
+Analyzer.prototype.learnFromValues = function(url,authorGender,subjectGender,sentiment,callback){
+    var self = this;
+
+    Analyzer.getHTMLBody(url,function(raw){
+        var text = extractor(raw).text;
+
+        if (!text || text == ""){
+            callback("Text from "+url+" was empty");
+            return;
+        }
+
+        var auth_res = self.learnAuthor(text,authorGender)
+        var sub_res = self.learnSubject(text,authorGender+"_"+subjectGender)
+        var sent_res = self.learnSentiment(sentiment,authorGender+"_"+subjectGender)
+
+        callback(auth_res && sub_res && sent_res);
+
+    });
+}
+
+Analyzer.prototype.fixLearning = function(callback){
+    var self = this;
+    MongoClient.connect(mongo_url,function(err,db){
+
+        db.collection("article").find({}).toArray(function(err,docs){
+
+            self.learnAll(docs);
+            db.close();
+        });
+    });
+}
+
+Analyzer.prototype.learnAll = function(list,callback){
+    if (list.length <= 0){
+        //callback(true);
+        return;
+    }
+
+    var cur = list.shift();
+    var self = this;
+
+    if (!cur || !cur.url || !cur.authorGender || !cur.subjectGender){
+        self.learnAll(list);
+        return;
+    }
+    console.log("Docs remaining: "+list.length);
+    //console.log("Learning "+cur.url);
+    this.learnFromValues(cur.url,cur.authorGender,cur.subjectGender,cur.sentiment,function(){
+        self.learnAll(list);
+    });
+}
+
+
+
 Analyzer.prototype.learnAuthor = function(text,authorGender){
     if (Analyzer.validateGenderString(authorGender)){
         this.authors.learn(text,authorGender);
-        Analyzer.writeClassifier(author_url,this.authors);
+        this.writeClassifier(author_url,this.authors);
         return true;
     }
 
@@ -128,13 +189,10 @@ Analyzer.prototype.learnSentiment = function(sentiment,gender){
     }
 
     if (Analyzer.validateGenderString(gender.split("_")[0])){
-        var senti_text = "negative";
-        if (sentiment >= .5){
-            senti_text = 'positive';
-        }
 
-        this.sentiments.learn(senti_text,gender);
-        Analyzer.writeClassifier(sentiment_url,this.sentiments);
+        sentiment = Math.floor(sentiment*10);
+        this.sentiments.learn(sentiment.toString(),gender);
+        this.writeClassifier(sentiment_url,this.sentiments);
         return true;
     }
 
@@ -144,7 +202,7 @@ Analyzer.prototype.learnSentiment = function(sentiment,gender){
 Analyzer.prototype.learnSubject = function(text,subjectGender){
     if (Analyzer.validateGenderString(subjectGender.split("_")[0])){
         this.subjects.learn(text,subjectGender);
-        Analyzer.writeClassifier(subject_url,this.subjects);
+        this.writeClassifier(subject_url,this.subjects);
         return true;
     }
 
