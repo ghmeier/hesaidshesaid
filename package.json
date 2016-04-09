@@ -1,0 +1,38 @@
+{
+  "name": "hesaidshesaid",
+  "version": "0.0.1",
+  "description": "Classify authors and see if we can determine the difference between male, female and non-binary authors writing about male, female, or non-binary individuals.",
+  "keywords": [
+    "express",
+    "tagging",
+    "mongodb"
+  ],
+  "homepage": "https://github.com/ghmeier/hesaidshesaid",
+  "author": "Garret Meier <meier.garret@gmail.com>",
+  "contributors": ["Aimee Pierce <aimeeipierce@gmail.com>"],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ghmeier/hesaidshesaid.git"
+  },
+  "bugs:": "https://github.com/ghmeier/hesaidshesaid/issues",
+  "engines": {
+    "node": ">= v0.10.0"
+  },
+  "dependencies": {
+    "async": "^1.4.2",
+    "bayes": "0.0.4",
+    "bluebird": "^2.9.6",
+    "body-parser": "^1.14.0",
+    "cors": "^2.7.1",
+    "express": "^4.13.3",
+    "express-session": "^1.11.3",
+    "express-validator": "^2.17.1",
+    "path": "^0.12.7",
+    "qs": "^2.4.1",
+    "request": "^2.64.0"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

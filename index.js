@@ -1,0 +1,35 @@
+//Server for hesaidshesaid
+
+var express = require("express");
+var path = require("path");
+var bodyParser = require("body-parser");
+var expressValidator = require("express-validator");
+var session = require("express-session");
+var cors = require("cors");
+var fs = require("fs");
+var Analyzer = require("./models/Analyzer.js")
+var corsOptions = {
+    origin : "*"
+};
+
+var app = express();
+
+app.use(bodyParser.json());
+app.use(expressValidator());
+
+app.use(session({
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 60 * 1000
+    },
+    secret: "none"
+}));
+app.use(cors(corsOptions));
+
+analyzer = Analyzer.getAnalyzer();
+
+var routes = require("./routes.js");
+routes(app,analyzer);
+
+module.exports = app;
