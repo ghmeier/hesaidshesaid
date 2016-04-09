@@ -87,6 +87,7 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
             callback(auth_res && sub_res && sent_res);
 
         });
+
     });
 }
 
