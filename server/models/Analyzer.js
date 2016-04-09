@@ -82,7 +82,7 @@ Analyzer.prototype.guess = function(url,callback){
         var authorGender = self.authors.categorize(text);
         var subjectGender = self.subjects.categorize(text);
         self.findSentiment(text,function(res){
-            var sentiment = self.sentiments.categorize(text);
+            var sentiment = self.sentiments.categorize(Analyzer.convertSentiment(res));
             callback({author:authorGender,subject:subjectGender,sentiment:sentiment});
         });
     });
@@ -146,7 +146,6 @@ Analyzer.prototype.fixLearning = function(callback){
 
 Analyzer.prototype.learnAll = function(list,callback){
     if (list.length <= 0){
-        //callback(true);
         return;
     }
 
@@ -158,7 +157,6 @@ Analyzer.prototype.learnAll = function(list,callback){
         return;
     }
     console.log("Docs remaining: "+list.length);
-    //console.log("Learning "+cur.url);
     this.learnFromValues(cur.url,cur.authorGender,cur.subjectGender,cur.sentiment,function(){
         self.learnAll(list);
     });
@@ -189,9 +187,7 @@ Analyzer.prototype.learnSentiment = function(sentiment,gender){
     }
 
     if (Analyzer.validateGenderString(gender.split("_")[0])){
-
-        sentiment = Math.floor(sentiment*10);
-        this.sentiments.learn(sentiment.toString(),gender);
+        this.sentiments.learn(Analyzer.convertSentiment(sentiment),gender);
         this.writeClassifier(sentiment_url,this.sentiments);
         return true;
     }
@@ -211,6 +207,10 @@ Analyzer.prototype.learnSubject = function(text,subjectGender){
 
 Analyzer.validateGenderString = function(gender){
     return GENDER_STRINGS[gender.toLowerCase()];
+}
+
+Analyzer.convertSentiment = function(sentiment){
+    return Math.floor(sentiment*10).toString();
 }
 
 module.exports = Analyzer;
