@@ -79,6 +79,12 @@ Analyzer.prototype.guess = function(url,callback){
     var self = this;
     Analyzer.getHTMLBody(url,function(raw){
         var text = extractor(raw).text;
+
+        if (!text || text == ""){
+            callback("Text from "+url+" was empty");
+            return;
+        }
+
         var authorGender = self.authors.categorize(text);
         var subjectGender = self.subjects.categorize(text);
         self.findSentiment(text,function(res){
@@ -97,6 +103,7 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
 
         if (!text || text == ""){
             callback("Text from "+url+" was empty");
+            return;
         }
 
         self.findSentiment(text,function(sentiment){
