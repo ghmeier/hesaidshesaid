@@ -2,13 +2,15 @@ var fs = require("fs");
 var bayes = require("bayes");
 var extractor = require('unfluff');
 var request = require("request");
+var MongoStreamService = require("./MongoStreamService.js");
 var author_url = "./authors.json";
 var subject_url = "./subjects.json";
-var GENDER_STRINGS = ["male","female","non-binary"];
+var GENDER_STRINGS = {"male":true,"female":true,"non-binary":true};
 
 function Analyzer(){
     this.authors = Analyzer.getClassifier(author_url);
     this.subjects = Analyzer.getClassifier(subject_url);
+    this.mongoStream = new MongoStreamService();
 }
 
 Analyzer.getAnalyzer = function(){
@@ -29,7 +31,7 @@ Analyzer.getClassifier = function(file){
 }
 
 Analyzer.writeClassifier = function(file,classifier){
-    fs.writeFileSynce(file,classifier.toJosn());
+    fs.writeFileSync(file,classifier.toJson());
 }
 
 Analyzer.getHTMLBody = function(url,callback){
@@ -53,19 +55,25 @@ Analyzer.prototype.guess = function(url,callback){
     });
 }
 
-Analyzer.prototype.learn = function(raw,authorGender,subjectGender,callback){
-    var text = extractor(raw).text;
+Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
+    var self = this;
 
-    if (this.learnAuthor(text,authorGender)){
-        if (this.learnSubject(text,subjectGender)){
-            callback(true);
-            return;
+    Analyzer.getHTMLBody(url,function(raw){
+        var text = extractor(raw).text;
+
+        if (self.learnAuthor(text,authorGender)){
+            if (self.learnSubject(text,subjectGender)){
+                var item = MongoStreamService.getStreamItem("article",{url:url,authorGender:authorGender,subjectGender:subjectGender});
+                self.mongoStream.push(item);
+                callback(true);
+                return;
+            }
+            console.log("ERROR: Failed to learn subject "+subjectGender);
         }
-        console.log("ERROR: Failed to learn subject "+subjectGender);
-    }
 
-    console.log("ERROR: Failed to learn author "+authorGender);
-    callback(false);
+        console.log("ERROR: Failed to learn author "+authorGender);
+        callback(false);
+    });
 }
 
 Analyzer.prototype.learnAuthor = function(text,authorGender){
@@ -89,7 +97,7 @@ Analyzer.prototype.learnSubject = function(text,subjectGender){
 }
 
 Analyzer.validateGenderString = function(gender){
-    return GENDER_STRINGS.includes(gender.toLowerCase());
+    return GENDER_STRINGS[gender.toLowerCase()];
 }
 
 module.exports = Analyzer;

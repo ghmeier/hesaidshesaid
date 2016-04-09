@@ -29,6 +29,7 @@
     "express": "^4.13.3",
     "express-session": "^1.11.3",
     "express-validator": "^2.17.1",
+    "mongodb": "^2.1.16",
     "path": "^0.12.7",
     "qs": "^2.4.1",
     "request": "^2.64.0",

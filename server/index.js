@@ -29,7 +29,6 @@ app.use(session({
 app.use(cors(corsOptions));
 
 analyzer = Analyzer.getAnalyzer();
-console.log(analyzer);
 
 var routes = require("./routes.js");
 routes(app,analyzer);
