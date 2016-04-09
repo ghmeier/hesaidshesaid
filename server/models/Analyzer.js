@@ -71,24 +71,16 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
     Analyzer.getHTMLBody(url,function(raw){
         var text = extractor(raw).text;
 
-        if (self.learnAuthor(text,authorGender)){
-            if (self.learnSubject(text,authorGender+"_"+subjectGender)){
+        self.findSentiment(text,function(sentiment){
+            var auth_res = self.learnAuthor(text,authorGender)
+            var sub_res = self.learnSubject(text,authorGender+"_"+subjectGender)
+            var sent_res = self.learnSentiment(sentiment,authorGender+"_"+subjectGender)
 
-                var sentiment = self.findSentiment(text);
+            var item = MongoStreamService.getStreamItem("article",{url:url,authorGender:authorGender,subjectGender:subjectGender,sentiment:sentiment});
+            self.mongoStream.push(item);
+            callback(auth_res && sub_res && sent_res);
 
-                if (self.learnSentiment(sentiment,authorGender+"_"+subjectGender)){
-                    var item = MongoStreamService.getStreamItem("article",{url:url,authorGender:authorGender,subjectGender:subjectGender,sentiment:sentiment});
-                    self.mongoStream.push(item);
-                    callback(true);
-                    return;
-                }
-                console.log("ERROR: Failed to learn sentiment "+url);
-            }
-            console.log("ERROR: Failed to learn subject "+subjectGender);
-        }
-
-        console.log("ERROR: Failed to learn author "+authorGender);
-        callback(false);
+        });
     });
 }
 
@@ -102,19 +94,19 @@ Analyzer.prototype.learnAuthor = function(text,authorGender){
     return false;
 }
 
-Analyzer.prototype.findSentiment = function(text){
+Analyzer.prototype.findSentiment = function(text,callback){
     indico.sentiment(text).then(function(res){
-        return res.Sentiment;
+        callback(res);
     });
 }
 
 Analyzer.prototype.learnSentiment = function(sentiment,gender){
     if (typeof sentiment !== 'number' || sentiment > 1 || sentiment < 0){
         console.log("Sentiment must be a number, was "+sentiment);
-        return;
+        return false;
     }
 
-    if (Analyzer.validateGenderString(subjectGender.split("_")[0])){
+    if (Analyzer.validateGenderString(gender.split("_")[0])){
         var senti_text = "negative";
         if (sentiment >= .5){
             senti_text = 'positive';
@@ -122,7 +114,10 @@ Analyzer.prototype.learnSentiment = function(sentiment,gender){
 
         this.sentiments.learn(senti_text,gender);
         Analyzer.writeClassifier(sentiment_url,this.sentiments);
+        return true;
     }
+
+    return false;
 }
 
 Analyzer.prototype.learnSubject = function(text,subjectGender){
