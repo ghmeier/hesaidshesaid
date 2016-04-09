@@ -49,4 +49,16 @@ module.exports = function(app,analyzer){
             res.json({success:success});
         });
     });
+
+    app.get("/authors",function(req,res){
+        res.json({classifier:analyzer.authors});
+    });
+
+    app.get("/subjects",function(req,res){
+        res.json({classifier:analyzer.subjects});
+    });
+
+    app.get("/sentiments",function(req,res){
+        res.json({classifier:analyzer.sentiments});
+    });
 };
