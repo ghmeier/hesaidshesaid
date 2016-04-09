@@ -30,6 +30,21 @@ module.exports = function(app,analyzer){
         var author = req.body.author;
         var subject = req.body.subject;
 
+        if (!text){
+            res.json({message:"text is a required parameter"});
+            return;
+        }
+
+        if (!author){
+            res.json({message:"author is a required parameter"});
+            return;
+        }
+
+        if (!subject){
+            res.json({message:"subject is a required parameter"});
+            return;
+        }
+
         analyzer.learn(text,author,subject,function(success){
             res.json({success:success});
         });
