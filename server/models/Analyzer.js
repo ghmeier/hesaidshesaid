@@ -74,7 +74,7 @@ Analyzer.prototype.learn = function(url,authorGender,subjectGender,callback){
         if (self.learnAuthor(text,authorGender)){
             if (self.learnSubject(text,authorGender+"_"+subjectGender)){
 
-                var sentiment = self.findSentiment(res["Sentiment"]);
+                var sentiment = self.findSentiment(text);
 
                 if (self.learnSentiment(sentiment,authorGender+"_"+subjectGender)){
                     var item = MongoStreamService.getStreamItem("article",{url:url,authorGender:authorGender,subjectGender:subjectGender,sentiment:sentiment});
