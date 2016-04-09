@@ -18,7 +18,7 @@ Analyzer.getAnalyzer = function(){
 Analyzer.getClassifier = function(file){
     var data = fs.readFileSync(file,"utf8");
     var authors = {};
-    console.log("Getting from "+file);
+
     if (data){
         authors = bayes.fromJson(data);
     }else{
@@ -43,12 +43,12 @@ Analyzer.getHTMLBody = function(url,callback){
 }
 
 Analyzer.prototype.guess = function(url,callback){
-
+    var self = this;
     Analyzer.getHTMLBody(url,function(raw){
         var text = extractor(raw).text;
-        console.log(text);
-        var authorGender = this.authors.categorize(text);
-        var subjectGender = this.subjects.categorize(text);
+        var authorGender = self.authors.categorize(text);
+        var subjectGender = self.subjects.categorize(text);
+
         callback({author:authorGender,subject:subjectGender});
     });
 }
