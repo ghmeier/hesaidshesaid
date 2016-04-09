@@ -54,6 +54,7 @@ MongoStreamService.prototype.commitDB = function(db){
             self.commitDB(db);
         }else{
             self.updating = false;
+            db.close();
         }
     });
 }
