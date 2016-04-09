@@ -7,17 +7,13 @@
 
   
   "browser_action": {
+<<<<<<< HEAD
    "default_icon": "pear-outline-filled-128x128.png",
+=======
+>>>>>>> 6a03ce54c6de868a6056e59c084f215064347327
    "default_popup": "popup.html"
   },
   
-  	"content_scripts": [
-		{
-			"matches": ["*://*/*"],
-			"js": ["jquery-2.2.3.min.js","content.js"],
-			"run_at": "document_end"
-		}
-	],
   
   "permissions": [
    "activeTab"
