@@ -59,9 +59,10 @@ Analyzer.prototype.guess = function(url,callback){
         var text = extractor(raw).text;
         var authorGender = self.authors.categorize(text);
         var subjectGender = self.subjects.categorize(text);
-        this.findSentiment(text)
-
-        callback({author:authorGender,subject:subjectGender});
+        self.findSentiment(text,function(res){
+            var sentiment = self.sentiments.categorize(text);
+            callback({author:authorGender,subject:subjectGender,sentiment:sentiment});
+        });
     });
 }
 
