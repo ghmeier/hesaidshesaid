@@ -15,8 +15,8 @@
             <a href="#!" class="brand-logo center">He Said She Said - Stats</a>
             <ul id="nav-mobile" class="right hide-on-med-and-dowm" style="height:inherit">
                 <li style="height:inherit">
-                    <a href="https://github.com/ghmeier/hesaidshesaid" style="height:inherit">
-                        Find it on Github.
+                    <a href="https://chrome.google.com/webstore/detail/hesaidshesaid-plugin/njnoppgdikgafdpbbdjblhehpameclcb" target="_blank" style="height:inherit">
+                        Find it on the Chrome Web Store.
                     </a>
                 </li>
             </ul>
@@ -24,28 +24,305 @@
         </nav>
     </div>
     <div class="container">
+        <div class="row">
+            <div id="quantity-chart" class="col s6" style="height:400px">
+            </div>
+            <div id="proportion-chart" class="col s6" style="height:400px">
+            </div>
+        </div>
+        <div class="row">
+            <div id="quantity-relation-chart" class="col s6" style="height:400px">
+            </div>
+            <div id="proportion-relation-chart" class="col s6" style="height:400px">
+            </div>
+        </div>
+        <div class="row">
+            <div id="sentiment-distribution-chart" class="col s6" style="height:400px">
+            </div>
+            <div id="top-sentiment-chart" class="col s6" style="height:400px">
+                <h5>Top Tone values by author to subject</h5>
+                <table>
+                    <thead>
+                      <tr>
+                          <th data-field="mtm">Male to Male</th>
+                          <th data-field="mtf">Male to Female</th>
+                          <th data-field="ftm">Female to Male</th>
+                          <th data-field="ftf">Female to Female</th>
+                      </tr>
+                    </thead >
+                    <tbody id ="tdata">
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
     <a id="refresh" class="waves-effect waves-light btn-large" style="position:fixed;bottom:45px;right:24px;"><i class="material-icons left">replay</i>Refresh</a>
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
-
-    <script src="http://underscorejs.org/underscore-min.js"></script>
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
     <!-- Compiled and minified JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js"></script>
-    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
 
-
-<script src = "https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-
-<script src = "https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
 
 <script>
 $(document).ready(function(){
-	getAuth(function(){
-		console.log("authors gotten");
+    var authors = {};
+    var subjects = {};
+    var sentiments = {};
+    var sent_dist = {};
+	getAuth(function(auths){
+        authors = auths;
+		getSub(function(subs){
+            subjects = subs;
+            getSent(function(sents,tsent,dsent){
+                sentiments = sents;
+                sent_dist = dsent;
+                var sent_top = _.chain(tsent).values().value();//.unzip().value();
+                var td = "";
+                for(j=0;j<3;j++){
+                    td += "<tr>"
+                    for(i=0;i<4;i++){
+                        td +="<td>Value: "+sent_top[i][j][0]+", "+sent_top[i][j][1]+" times</td>";
+                    }
+                    td+="</tr>";
+                }
+                $("#tdata").html(td);
+
+                $("#quantity-chart").highcharts({
+                    chart: {
+                        type:"column"
+                    },
+                    title:{
+                        text:"Gender Distribution in Articles"
+                    },
+                    xAxis:{
+                        categories:["Authors","Subjects"]
+                    },
+                    yAxis:{
+                        min:0,
+                        title:{
+                            text:"Number of Documents"
+                        },
+                        stackLabels:{
+                            enabled:true,
+                            style:{
+                                fontWeight:"bold",
+                                color: "gray"
+                            }
+                        }
+                    },
+                    legend:{
+                        align: 'right',
+                        x: -30,
+                        verticalAlign: 'top',
+                        y: 25,
+                        floating: true,
+                        backgroundColor: 'white',
+                        borderColor: '#CCC',
+                        borderWidth: 1,
+                        shadow: false
+                    },
+                    tooltip: {
+                        headerFormat: '<b>{point.x}</b><br/>',
+                        pointFormat: '{series.name}: {point.y}<br/>Total: {point.stackTotal}'
+                    },
+                    plotOptions: {
+                        column: {
+                            stacking: 'normal',
+                            dataLabels: {
+                                enabled: true,
+                                color: 'white',
+                                style: {
+                                    textShadow: '0 0 3px black'
+                                }
+                            }
+                        }
+                    },
+                    series:[{
+                        name:"Male",
+                        data:[authors.docCount.male,
+                        subjects.docCount.male_male+subjects.docCount.female_male]
+                    },{
+                        name:"Female",
+                        data:[authors.docCount.female,
+                        subjects.docCount.male_female+subjects.docCount.female_female]
+                    }],
+                });
+
+                $("#proportion-chart").highcharts({
+                    chart: {
+                        type:"column"
+                    },
+                    title:{
+                        text:"Gender Proportions in Articles"
+                    },
+                    xAxis:{
+                        categories:["Authors","Subjects"]
+                    },
+                    yAxis:{
+                        min:0,
+                        title:{
+                            text:"Share of Total"
+                        },
+                    },
+                    legend:{
+                        align: 'right',
+                        x: -30,
+                        verticalAlign: 'top',
+                        y: 25,
+                        floating: true,
+                        backgroundColor: 'white',
+                        borderColor: '#CCC',
+                        borderWidth: 1,
+                        shadow: false
+                    },
+                    tooltip: {
+                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
+                        shared: true
+                    },
+                    plotOptions: {
+                        column: {
+                            stacking: 'percent'
+                        }
+                    },
+                    series:[{
+                        name:"Male",
+                        data:[authors.docCount.male,
+                        subjects.docCount.male_male+subjects.docCount.female_male]
+                    },{
+                        name:"Female",
+                        data:[authors.docCount.female,
+                        subjects.docCount.male_female+subjects.docCount.female_female]
+                    }],
+                });
+                $("#quantity-relation-chart").highcharts({
+                    chart: {
+                        type:"column"
+                    },
+                    title:{
+                        text:"Author Reporting on Subject Gender in Article"
+                    },
+                    xAxis:{
+                        categories:["Male to Male","Male to Female","Female to Male","Female to Female"]
+                    },
+                    yAxis:{
+                        min:0,
+                        title:{
+                            text:"Number of Documents"
+                        },
+                        stackLabels:{
+                            enabled:true,
+                            style:{
+                                fontWeight:"bold",
+                                color: "gray"
+                            }
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<b>{point.x}</b><br/>',
+                        pointFormat: '{series.name}: {point.y}<br/>Total: {point.stackTotal}'
+                    },
+                    plotOptions: {
+                        column: {
+                            stacking: 'normal'
+                        }
+                    },
+                    series:[{
+                        name:"Article",
+                        data:[subjects.docCount.male_male,subjects.docCount.male_female,subjects.docCount.female_male,subjects.docCount.female_female]
+                    }],
+                });
+                $("#proportion-relation-chart").highcharts({
+                    chart: {
+                        type:"column"
+                    },
+                    title:{
+                        text:"Author Reporting on Subject Proportions"
+                    },
+                    xAxis:{
+                        categories:["Articles"]
+                    },
+                    yAxis:{
+                        min:0,
+                        title:{
+                            text:"Proportion of Documents"
+                        },
+                        stackLabels:{
+                            enabled:true,
+                            style:{
+                                fontWeight:"bold",
+                                color: "gray"
+                            }
+                        }
+                    },
+                    tooltip: {
+                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
+                        shared: true
+                    },
+                    plotOptions: {
+                        column: {
+                            stacking: 'percent'
+                        }
+                    },
+                    series:[{
+                        name:"Male to Male",
+                        data:[subjects.docCount.male_male]
+                    },{
+                        name:"Male to Female",
+                        data:[subjects.docCount.male_female]
+                    },{
+                        name:"Female to Male",
+                        data:[subjects.docCount.female_male]
+                    },{
+                        name:"Female to Female",
+                        data:[subjects.docCount.female_female]
+                    }],
+                });
+                $("#sentiment-distribution-chart").highcharts({
+                    chart: {
+                        type:"column"
+                    },
+                    title:{
+                        text:"Tone of Articles (0 low, 10 high)"
+                    },
+                    xAxis:{
+                        title:{
+                            text:"Tone Rating"
+                        },
+                       type:"category"
+                    },
+                    yAxis:{
+                        min:0,
+                        title:{
+                            text:"Number of Documents"
+                        },
+                        stackLabels:{
+                            enabled:true,
+                            style:{
+                                fontWeight:"bold",
+                                color: "gray"
+                            }
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<b>{point.x}</b><br/>',
+                        pointFormat: '{series.name}: {point.y}<br/>Total: {point.stackTotal}'
+                    },
+                    legend:{
+                        enabled:false
+                    },
+                    series:[{
+                        name:"Articles",
+                        data:dsent
+                    }],
+                });
+            });
+        });
 	});
-	getSub();
-	getSent();
+
+
 	console.log("end");
 });
 
@@ -54,9 +331,10 @@ var getAuth = function(callback){
 	$.get("authors",function(data){
 		var mAuthCount = data.classifier.docCount.male;
 		var fAuthCount = data.classifier.docCount.female;
-		
-		console.log(mAuthCount,fAuthCount);
-		callback();
+
+		//console.log(mAuthCount,fAuthCount);
+        if (callback)
+		  callback(data.classifier);
 	});
 };
 
@@ -64,24 +342,42 @@ var getSub = function(callback){
 	$.get("subjects",function(data){
 		var mSub = data.classifier.docCount.male_male + data.classifier.docCount.female_male;
 		var fSub = data.classifier.docCount.male_female + data.classifier.docCount.female_female;
-		console.log(mSub,fSub);
+		//console.log(mSub,fSub);
 		if(callback)
-			callback();
+			callback(data.classifier);
 	});
 }
 
 var getSent = function(callback){
 	$.get("sentiments",function(data){
-	
+
 	var keys = {};
-	var dist = {};
+	var top = {};
+    var dist = {};
 	keys = Object.keys(data.classifier.wordFrequencyCount);
 		for(i=0;i<keys.length;i++){
-			dist[keys[i]] = _.chain(data.classifier.wordFrequencyCount[keys[i]]).pairs().sortBy(function(pair){return pair[1];}).value().splice(7,3);
+            var pairs = _.chain(data.classifier.wordFrequencyCount[keys[i]]).pairs().value();
+			top[keys[i]] = _.chain(pairs).sortBy(function(pair){return pair[1];}).value();
+                var thresh = top[keys[i]].length - 3;
+                if (thresh < 0){
+                    thresh = 0;
+                }
+                top[keys[i]] = top[keys[i]].splice(thresh,3);
+
+            for (j=0;j<pairs.length;j++){
+                if (!dist[pairs[j][0]]){
+                    dist[pairs[j][0]] = 0;
+                }
+
+                dist[pairs[j][0]] += pairs[j][1];
+            }
+
 		}
-	console.log(keys,dist)
+
+        dist = _.chain(dist).pairs().sortBy(function(pair){return pair[1];}).value();
+	console.log(keys,top,dist);
 	if(callback)
-		callback();
+		callback(data.classifier,top,dist);
 	});
 }
 
