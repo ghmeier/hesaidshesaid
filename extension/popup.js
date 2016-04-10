@@ -12,8 +12,8 @@ chrome.tabs.query({active:true,currentWindow:true},function(tabs){
         document.getElementById("pss1").innerHTML = genderMap[data.sentimentGender.split("_")[0]];
         document.getElementById("pss2").innerHTML = genderMap[data.sentimentGender.split("_")[1]];
         if (data.author && data.subject){
-            document.getElementById("responses").show();
-            document.getElementById("loading").hide();
+            document.getElementById("responses").style.display = "block";//.show();
+            document.getElementById("loading").style.display = "none";//.hide();
         }
     });
 });
