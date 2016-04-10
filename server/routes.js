@@ -67,4 +67,8 @@ module.exports = function(app,analyzer){
     app.get("/sentiments",function(req,res){
         res.json({classifier:analyzer.sentiments});
     });
+
+    app.get("*",function(req,res){
+        res.sendFile(__dirname +"/views/index.html");
+    })
 };
