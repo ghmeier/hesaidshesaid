@@ -70,7 +70,7 @@ Analyzer.getHTMLBody = function(url,callback){
             callback(false);
             return;
         }
-
+        //console.log(body);
         callback(body);
     }).setMaxListeners(0);;
 }
@@ -81,7 +81,7 @@ Analyzer.prototype.guess = function(url,callback){
         var text = extractor(raw).text;
 
         if (!text || text == ""){
-            callback("Text from "+url+" was empty");
+            callback({author:"",subject:"",sentiment:0,sentimentGender:"",success:"Text from "+url+" was empty"});
             return;
         }
 

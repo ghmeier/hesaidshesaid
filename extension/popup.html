@@ -35,7 +35,7 @@
 
       <h1>He Said She Said</h1>
       <hr>
-      <div class="selection">
+      <div class="selection" id ="postshow">
         <div class="selector">
           <h4>Author Gender:</h4>
           <label for="aa">
@@ -66,12 +66,15 @@
       </div>
     </div>
     <hr>
-    <div class="response" id="responses" style = "display:hidden">
+    <div class="response" id="responses" style = "display:none">
       <h4>Predicted Genders:</h4>
       <div class="selector">Author: <span id="pag">Loading...</span></div>
       <div class="selector">Subject: <span id="psg">Loading...</span></div>
       <div>Sentiment: <span id="psc">-1</span>/10 </br> The tone is like a <span id="pss1">Loading..</span> writing about a <scan id="pss2">Loading..</scan>.</div>
 
+    </div>
+    <div id="loading">
+      Loading...
     </div>
   </body>
 </html>

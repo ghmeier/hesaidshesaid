@@ -34,7 +34,8 @@
     "path": "^0.12.7",
     "qs": "^2.4.1",
     "request": "^2.64.0",
-    "unfluff": "^1.0.0"
+    "unfluff": "^1.0.0",
+    "utf8": "^2.1.1"
   },
   "license": "MIT",
   "scripts": {

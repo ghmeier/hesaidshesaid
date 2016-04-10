@@ -13,6 +13,7 @@ chrome.tabs.query({active:true,currentWindow:true},function(tabs){
         document.getElementById("pss2").innerHTML = genderMap[data.sentimentGender.split("_")[1]];
         if (data.author && data.subject){
             document.getElementById("responses").show();
+            document.getElementById("loading").hide();
         }
     });
 });
@@ -39,7 +40,19 @@ chrome.tabs.query({active:true,currentWindow:true},function(tabs){
     chrome.tabs.getSelected(null, function(tab) {
       d = document;
       var f = d.createElement('form');
+/*      var http = new XMLHttpRequest();
+      var params = "author="+genderAuth+"&subject="+genderSub+"&text="+tab.url;
+      var url = 'https://hesaidshesaid.herokuapp.com/learn';
 
+      http.open("POST",url,true);
+      http.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        http.onreadystatechange = function() {//Call a function when the state changes.
+            if(http.readyState == 4 && http.status == 200) {
+                console.log(http.responseText);
+                document.getElementById
+            }
+        }
+      http.send(params);*/
 	  var gA = d.createElement('input');
 	  gA.name = 'author';
 	  gA.type = 'hidden';

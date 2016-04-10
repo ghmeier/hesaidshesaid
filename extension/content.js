@@ -6,7 +6,7 @@ we're putting all document content into body
 
 var url = document.URL;
 $.ajax({
-	url: "https://hesaidshesaid.herokuapp.com/guess",
+	url: "http://localhost:3000/guess",
 	method: 'POST',
 	dataType: 'json',
 	data:{text: url},
