@@ -68,13 +68,22 @@
 
 <script>
 $(document).ready(function(){
-    var authors = {};
+    loadAll();
+});
+
+$("#refresh").click(function(){
+    $("#tdata").html("");
+    loadAll();
+});
+
+var loadAll = function(){
+        var authors = {};
     var subjects = {};
     var sentiments = {};
     var sent_dist = {};
-	getAuth(function(auths){
+    getAuth(function(auths){
         authors = auths;
-		getSub(function(subs){
+        getSub(function(subs){
             subjects = subs;
             getSent(function(sents,tsent,dsent){
                 sentiments = sents;
@@ -320,12 +329,8 @@ $(document).ready(function(){
                 });
             });
         });
-	});
-
-
-	console.log("end");
-});
-
+    });
+}
 
 var getAuth = function(callback){
 	$.get("authors",function(data){
