@@ -1,18 +1,21 @@
 document.addEventListener('DOMContentLoaded', function() {
-<<<<<<< HEAD
-  
-	chrome.extension.sendMessage({status: "opened"},
-		function(response){
-			console.log(response);
-		}
-	);
-  
-  
-  var Button = document.getElementById('Submit');
-=======
+
+var genderMap = {"male":"Male","female":"Female","nonBin":"Non-Binary"};
+
+chrome.tabs.query({active:true,currentWindow:true},function(tabs){
+    chrome.tabs.sendMessage(tabs[0].id,{status:"opened"},function(response){
+        var data = response.data;
+        console.log(data);
+        document.getElementById("pag").innerHTML = genderMap[data.author];
+        document.getElementById("psg").innerHTML = genderMap[data.subject.split("_")[1]];
+        document.getElementById("psc").innerHTML = data.sentiment;
+        document.getElementById("pss1").innerHTML = genderMap[data.sentimentGender.split("_")[0]];
+        document.getElementById("pss2").innerHTML = genderMap[data.sentimentGender.split("_")[1]];
+    });
+});
+
   var Button = document.getElementById('Submit');
 
->>>>>>> 99e7837d7e56b1ddefc0b48f891c2bd33436ccb0
   Button.addEventListener('click', function() {
 
 	var genderAuth;
@@ -60,6 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
       f.submit();
     });
   }, false);
-  
-  
+
+
 }, false);
